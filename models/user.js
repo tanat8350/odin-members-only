@@ -4,14 +4,13 @@ const Schema = mongoose.Schema;
 const UserSchema = new Schema({
   first_name: { type: String, minLength: 3, maxLength: 100, required: true },
   last_name: { type: String, minLength: 3, maxLength: 100, required: true },
-  email: {
+  email: { type: String, minLength: 3, maxLength: 100, required: true },
+  password: { type: String, required: true },
+  membership: {
     type: String,
     enum: ['', 'member', 'admin'],
     default: '',
-    required: true,
   },
-  password: { type: String, required: true },
-  membership: { type: String, required: true },
 });
 
 UserSchema.virtual('fullname').get(function () {

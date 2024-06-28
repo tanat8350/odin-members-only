@@ -4,13 +4,13 @@ block content
   a(href='/') Home
   h1 Login
 
-  form(action="/", method="post")
+  form(method="post")
     div
-      label(for='input-email') Email:&nbsp;
-      input(type='text' id='input-email' name='input-email' required)
+      label(for='email') Email:&nbsp;
+      input(type='text' id='email' name='email' required)
     div
-      label(for='input-password') Password:&nbsp;
-      input(type='text' id='input-password' name='input-password' required)
+      label(for='password') Password:&nbsp;
+      input(type='text' id='password' name='password' required)
     button(type="submit") Login
   p Do not have an account&nbsp;
     a(href='/sign-up') Sign up
