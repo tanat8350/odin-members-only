@@ -3,18 +3,18 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-
 const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcryptjs');
 
+require('dotenv').config();
 const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
 
 mongoose.set('strictQuery', false);
 
-require('dotenv').config();
-const mongoDB = process.env.MONGODB_URI;
+const mongoDB = process.env.DB_URI;
 
 // NOTE: - try odin later
 main().catch((err) => console.log(err));
@@ -26,8 +26,7 @@ const User = require('./models/user');
 
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
-const signUpRouter = require('./routes/sign-up');
-const loginRouter = require('./routes/login');
+const authenticateRouter = require('./routes/authenticate');
 
 const app = express();
 
@@ -35,46 +34,22 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-app.use(session({ secret: 'cats', resave: false, saveUninitialized: true }));
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.DB_URI,
+      collection: 'sessions',
+    }),
+    cookie: { maxAge: 86400000 },
+  })
+);
 app.use(passport.session());
 // app.use(express.urlencoded({ extended: false }));
 
-const customField = {
-  usernameField: 'email',
-};
-
-passport.use(
-  new LocalStrategy(customField, async (username, password, done) => {
-    try {
-      const user = await User.findOne({ email: username });
-      if (!user) {
-        return done(null, false, { message: 'Incorrect email' });
-      }
-      const match = await bcrypt.compare(password, user.password);
-      if (!match) {
-        // passwords do not match!
-        return done(null, false, { message: 'Incorrect password' });
-      }
-
-      return done(null, user);
-    } catch (err) {
-      return done(err);
-    }
-  })
-);
-
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err);
-  }
-});
+require('./config/authentication');
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -84,8 +59,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/sign-up', signUpRouter);
-app.use('/login', loginRouter);
+app.use('/', authenticateRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

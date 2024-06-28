@@ -1,13 +1,16 @@
 const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
+const passport = require('passport');
 
 const User = require('../models/user');
 
-exports.get = (req, res, next) => {
+const bcrypt = require('bcryptjs');
+
+exports.signUp_get = (req, res, next) => {
   res.render('sign-up', { title: 'Sign up' });
 };
 
-exports.post = [
+exports.signUp_post = [
   body('first_name')
     .trim()
     .isLength({ min: 3, max: 100 })
@@ -56,3 +59,44 @@ exports.post = [
     });
   },
 ];
+
+exports.login_get = (req, res, next) => {
+  res.render('login', {
+    title: 'Login',
+  });
+};
+
+exports.login_post = passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/',
+});
+
+exports.logout = (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    }
+    res.redirect('/');
+  });
+};
+
+exports.member_get = (req, res, next) => {
+  res.render('member', {
+    title: 'Update membership',
+    user: req.user,
+  });
+};
+
+exports.member_post = async (req, res, next) => {
+  let membership = '';
+  if (req.body.code === process.env.CODE_MEMBER) membership = 'member';
+  if (req.body.code === process.env.CODE_ADMIN) membership = 'admin';
+
+  const user = new User({
+    membership,
+    _id: req.user._id,
+  });
+
+  await User.findByIdAndUpdate(req.user._id, user);
+  res.redirect('/');
+};
