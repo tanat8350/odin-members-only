@@ -1,5 +1,4 @@
 const { body, validationResult } = require('express-validator');
-const mongoose = require('mongoose');
 const passport = require('passport');
 
 const User = require('../models/user');

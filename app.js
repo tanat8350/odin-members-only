@@ -3,10 +3,12 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+
 const session = require('express-session');
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const bcrypt = require('bcryptjs');
+
+const compression = require('compression');
+const helmet = require('helmet');
 
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -22,13 +24,18 @@ async function main() {
   await mongoose.connect(mongoDB);
 }
 
-const User = require('./models/user');
-
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/users');
 const authenticateRouter = require('./routes/authenticate');
 
 const app = express();
+
+const RateLimit = require('express-rate-limit');
+const limiter = RateLimit({
+  windowMs: 60000, // 1 min
+  max: 20,
+});
+app.use(limiter);
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -47,7 +54,6 @@ app.use(
   })
 );
 app.use(passport.session());
-// app.use(express.urlencoded({ extended: false }));
 
 require('./config/authentication');
 
@@ -56,6 +62,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(helmet());
+app.use(compression());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

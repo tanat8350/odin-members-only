@@ -32,11 +32,12 @@ block content
         h2= post.title
         p= post.content
         p= post.timestamp_formatted
-        if user && user.membership === 'member' || user.membership === 'admin'
-          p Author: #{post.author.fullname}
-        if user.membership === 'admin'
-          form(action=(post.url + '/delete') method="post")
-            button(type="submit") Delete
+        if user
+          if user.membership === 'member' || user.membership === 'admin'
+            p Author: #{post.author.fullname}
+          if user.membership === 'admin'
+            form(action=(post.url + '/delete') method="post")
+              button(type="submit") Delete
         hr
   else
     p There is no post
